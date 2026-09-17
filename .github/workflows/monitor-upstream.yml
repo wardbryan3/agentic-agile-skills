@@ -1,0 +1,66 @@
+name: Monitor adapted Matt skills
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 8 * * 1"
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  monitor:
+    if: github.repository == 'wardbryan3/agentic-agile-skills'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Report adapted upstream changes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          base=$(grep '^\*\*Base commit:\*\*' UPSTREAM.md | awk -F'`' '{print $2}')
+          head=$(gh api "repos/mattpocock/skills/commits/main" --jq '.sha')
+
+          if [ "$base" = "$head" ]; then
+            exit 0
+          fi
+
+          changed=$(gh api "repos/mattpocock/skills/compare/${base}...${head}" --jq '.files[].filename')
+          adapted=$(printf '%s\n' "$changed" | grep -E '^(implement|research|prototype)/' || true)
+
+          if [ -z "$adapted" ]; then
+            exit 0
+          fi
+
+          title='[upstream-sync] Adapted Matt skill changes'
+          existing=$(gh issue list \
+            --repo "$GH_REPO" \
+            --state open \
+            --json number,title \
+            --jq '[.[] | select(.title == "[upstream-sync] Adapted Matt skill changes")][0].number // empty')
+
+          if [ -n "$existing" ]; then
+            exit 0
+          fi
+
+          body=$(cat <<EOF
+          Matt's upstream skills changed after the recorded base.
+
+          Base: https://github.com/mattpocock/skills/commit/${base}
+          Head: https://github.com/mattpocock/skills/commit/${head}
+          Compare: https://github.com/mattpocock/skills/compare/${base}...${head}
+
+          Changed adapted paths:
+
+          \`\`\`text
+          ${adapted}
+          \`\`\`
+
+          Review the diff, preserve this repository's Agile behavior, then update UPSTREAM.md only after merging an intentional sync.
+          EOF
+          )
+
+          gh issue create --repo "$GH_REPO" --title "$title" --body "$body"

@@ -2,15 +2,24 @@
 
 An AI-agent workflow for running one human-judged sprint at a time. The Agile skills are the primary operating loop; selected Matt Pocock skills are approved in-sprint tools.
 
-## Install
+## Why This Exists
 
-Install all skills for every detected agent in the current project:
+Matt Pocock's skills provide strong building blocks for discovery, implementation, testing, review, and delivery. This package adds the missing outer loop for AI-agent work: one visible sprint outcome, a human-judged Definition of Done, approved supporting gates, and an explicit design corpus.
+
+The workflow exists to keep planning artifacts bounded. Personal Agile state lives in `.agile/`; durable design documents are created only by an explicit design request. Agents can escalate to Matt skills, but only after a human approves the escalation.
+
+## Dependency and Installation Order
+
+This repository is an overlay, not a fork of [mattpocock/skills](https://github.com/mattpocock/skills). It includes only five new Agile skills and three adapted Matt skills: `implement`, `research`, and `prototype`.
+
+Install Matt's collection first, then install this overlay second. The order is required so the Agile-aware versions of those three skills win:
 
 ```sh
+npx skills add mattpocock/skills --all
 npx skills add wardbryan3/agentic-agile-skills --all
 ```
 
-Install the Agile loop globally for OpenCode:
+To install the Agile loop globally for OpenCode after Matt's skills are available:
 
 ```sh
 npx skills add wardbryan3/agentic-agile-skills \
@@ -24,17 +33,7 @@ npx skills add wardbryan3/agentic-agile-skills \
   --yes
 ```
 
-Install the adapted delivery helpers when needed:
-
-```sh
-npx skills add wardbryan3/agentic-agile-skills \
-  --skill implement \
-  --skill research \
-  --skill prototype \
-  --agent opencode \
-  --global \
-  --yes
-```
+Do not install Matt's collection after this overlay unless you reinstall the overlay afterward.
 
 ## Included Skills
 
@@ -63,13 +62,11 @@ The Definition of Done always requires human inference. Tests, builds, benchmark
 
 Agile proposes a Matt skill when work changes shape, then invokes it after approval. The intended companion skills are `grilling`, `domain-modeling`, `prototype`, `research`, `diagnosing-bugs`, `to-spec`, `to-tickets`, `implement`, `tdd`, `code-review`, and optionally `setup-matt-pocock-skills`.
 
-Install the broader Matt Pocock collection separately when it is not already available:
-
-```sh
-npx skills add mattpocock/skills --all
-```
-
 Personal Agile state lives under `.agile/` and is locally excluded from Git. Shared workflows leave `.agile/` tracked. Personal design work remains private under `.agile/design/`; shared design work follows the repository's established convention.
+
+## Upstream Sync
+
+The adapted Matt skills are deliberately vendored so Agile can alter their behavior. [UPSTREAM.md](UPSTREAM.md) records their upstream source and base commit. A weekly GitHub Actions workflow opens one issue when `implement`, `research`, or `prototype` changes upstream. Review that diff manually and update the recorded base only after intentionally merging the change.
 
 ## Repository Layout
 
